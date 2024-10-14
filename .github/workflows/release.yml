@@ -31,5 +31,5 @@ jobs:
         uses: ncipollo/release-action@v1.12.0
         with:
           artifacts: "release.zip"
-          tag: Release-${{ env.COMMIT_ID }}-${{ env.CURRENT_TIME }} 
+          tag: ${{ env.COMMIT_ID }}-${{ env.CURRENT_TIME }} 
           token: ${{ secrets.TOKEN }} 
