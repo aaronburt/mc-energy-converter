@@ -23,5 +23,5 @@ jobs:
         uses: ncipollo/release-action@v1.12.0
         with:
           artifacts: "release.zip"
-          tag: ${{ github.run_attempt }}
+          tag: ${{ github.event.ref }}
           token: ${{ secrets.TOKEN }}
