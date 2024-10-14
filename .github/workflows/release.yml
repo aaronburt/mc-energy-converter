@@ -24,4 +24,4 @@ jobs:
         with:
           artifacts: "release.zip"
           tag: ${{ github.sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
