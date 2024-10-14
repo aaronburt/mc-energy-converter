@@ -1,48 +1,81 @@
-const energyUnits = {
-    "J": { "name": "Joule", "conversion_to_J": 1 },
-    "AM": { "name": "Arbitrary Unit", "conversion_to_J": 125 },
-    "EU": { "name": "Energy Unit", "conversion_to_J": 10 },
-    "MJ": { "name": "MegaJoule", "conversion_to_J": 16 },
-    "RF": { "name": "Redstone Flux (RF)", "conversion_to_J": 2.5 },
-    "FE": { "name": "Flux Energy (FE)", "conversion_to_J": 2.5 },
-    "gJ": { "name": "gigaJoule", "conversion_to_J": 1.525 },
-    "AE": { "name": "Applied Energy", "conversion_to_J": 1 }
+const conversionData = {
+    "AM": { factor: 0.05, fullName: "Amber" },
+    "RF": { factor: 1, fullName: "Redstone Flux" },
+    "FE": { factor: 1, fullName: "Forge Energy" },
+    "J": { factor: 1, fullName: "Joule" },
+    "EU": { factor: 0.25, fullName: "Energy Unit" },
+    "gJ": { factor: 1.6, fullName: "GigaJoule" },
+    "MJ": { factor: 1 / 1_000_000, fullName: "MegaJoule" },
+    "AE": { factor: 0.5, fullName: "Applied Energistics" },
+    "W": { factor: 5628, fullName: "Watt" },
+    "uI": { factor: 1, fullName: "MicroInfinity" }
 };
 
-const fromUnitSelect = document.getElementById('fromUnit');
-const toUnitSelect = document.getElementById('toUnit');
-const amountInput = document.getElementById('amount');
-const resultDisplay = document.getElementById('result');
 
-for (const unit in energyUnits) {
-    const optionFrom = document.createElement('option');
-    optionFrom.value = unit;
-    optionFrom.textContent = `${energyUnits[unit].name} (${unit})`;
-    fromUnitSelect.appendChild(optionFrom);
+const conversionFactorsMap = new Map(Object.entries(conversionData).map(([key, { factor }]) => [key, factor]));
 
-    const optionTo = document.createElement('option');
-    optionTo.value = unit;
-    optionTo.textContent = `${energyUnits[unit].name} (${unit})`;
-    toUnitSelect.appendChild(optionTo);
-}
+document.addEventListener("DOMContentLoaded", () => {
+    populateUnitSelectors();
+    addEventListeners();
+});
 
-// Function to perform the conversion
-function convert() {
-    const fromUnit = fromUnitSelect.value;
-    const toUnit = toUnitSelect.value;
-    const amount = parseFloat(amountInput.value);
+function populateUnitSelectors() {
+    const fromUnitSelect = document.getElementById("fromUnit");
+    const toUnitSelect = document.getElementById("toUnit");
 
-    if (!isNaN(amount)) {
-        const amountInJ = amount * energyUnits[fromUnit].conversion_to_J;
-        const result = amountInJ / energyUnits[toUnit].conversion_to_J;
-        resultDisplay.textContent = `${amount} ${energyUnits[fromUnit].name} = ${result.toFixed(2)} ${energyUnits[toUnit].name}`;
-    } else {
-        resultDisplay.textContent = '';
+    for (let unit of conversionFactorsMap.keys()) {
+        const optionFrom = document.createElement("option");
+        optionFrom.value = unit;
+        optionFrom.textContent = `${unit} - ${conversionData[unit].fullName}`; 
+        fromUnitSelect.appendChild(optionFrom);
+
+        const optionTo = document.createElement("option");
+        optionTo.value = unit;
+        optionTo.textContent = `${unit} - ${conversionData[unit].fullName}`; 
+        toUnitSelect.appendChild(optionTo);
     }
 }
 
-fromUnitSelect.addEventListener('change', convert);
-toUnitSelect.addEventListener('change', convert);
-amountInput.addEventListener('input', convert);
+function addEventListeners() {
+    const amountInput = document.getElementById("amount");
+    const fromUnitSelect = document.getElementById("fromUnit");
+    const toUnitSelect = document.getElementById("toUnit");
 
-convert();
+    amountInput.addEventListener("input", updateResult);
+    fromUnitSelect.addEventListener("change", updateResult);
+    toUnitSelect.addEventListener("change", updateResult);
+}
+
+function updateResult() {
+    const inputValue = parseFloat(document.getElementById("amount").value);
+    const inputUnit = document.getElementById("fromUnit").value;
+    const outputUnit = document.getElementById("toUnit").value;
+
+    if (isNaN(inputValue)) {
+        document.getElementById("result").textContent = "Invalid input";
+        return;
+    }
+
+    const rfValue = convertToRF(inputValue, inputUnit);
+    const outputValue = convertFromRF(rfValue, outputUnit);
+    
+    // Format the output value based on whether it's a whole number or not
+    document.getElementById("result").textContent = 
+        Number.isInteger(outputValue) ? outputValue.toString() : outputValue.toFixed(2);
+}
+
+function convertToRF(value, unit) {
+    const factor = conversionFactorsMap.get(unit);
+    if (!factor) {
+        return "Invalid unit"; 
+    }
+    return value / factor;
+}
+
+function convertFromRF(value, unit) {
+    const factor = conversionFactorsMap.get(unit);
+    if (!factor) {
+        return "Invalid unit"; 
+    }
+    return value * factor;
+}
